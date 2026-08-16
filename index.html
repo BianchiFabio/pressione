@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pressione">
+<title>Monitoraggio Pressione</title>
+<style>
+  :root{
+    --blu:#0c447c;
+    --blu-chiaro:#e6f1fb;
+    --verde:#3b6d11;
+    --verde-bg:#eaf3de;
+    --rosso:#791f1f;
+    --rosso-bg:#fcebeb;
+    --testo:#1f2430;
+    --testo-sec:#6b7280;
+    --bordo:#e5e7eb;
+    --sfondo:#f4f5f7;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background:var(--sfondo);
+    color:var(--testo);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  header{
+    padding:calc(env(safe-area-inset-top) + 18px) 20px 16px;
+    background:var(--card);
+    border-bottom:1px solid var(--bordo);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  header h1{
+    margin:0;
+    font-size:20px;
+    font-weight:600;
+  }
+  header p{
+    margin:4px 0 0;
+    font-size:13px;
+    color:var(--testo-sec);
+  }
+  main{
+    max-width:520px;
+    margin:0 auto;
+    padding:16px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--bordo);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 12px;
+    color:var(--testo);
+  }
+  .riga{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .campo{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .campo label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--testo-sec);
+  }
+  input{
+    height:42px;
+    border-radius:10px;
+    border:1px solid var(--bordo);
+    padding:0 12px;
+    font-size:16px;
+    background:#fafafa;
+    color:var(--testo);
+    width:100%;
+  }
+  input:focus{
+    outline:none;
+    border-color:var(--blu);
+    background:#fff;
+  }
+  .errore{
+    font-size:12px;
+    color:var(--rosso);
+    margin-top:2px;
+    min-height:14px;
+  }
+  button.salva{
+    width:100%;
+    height:46px;
+    border-radius:10px;
+    border:none;
+    background:var(--blu);
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+    margin-top:4px;
+  }
+  button.salva:active{opacity:0.85;}
+  .lista-titolo{
+    font-size:15px;
+    font-weight:600;
+    margin:4px 0 10px 2px;
+  }
+  .voce{
+    background:var(--card);
+    border:1px solid var(--bordo);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .voce .sinistra .data{
+    font-size:13px;
+    color:var(--testo-sec);
+    margin-bottom:6px;
+  }
+  .voce .valori{
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+    font-size:20px;
+    font-weight:600;
+  }
+  .voce .valori .sep{
+    color:var(--testo-sec);
+    font-weight:400;
+    font-size:16px;
+  }
+  .pallino{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    display:inline-block;
+    margin-left:6px;
+  }
+  .pallino.verde{background:#3b6d11;}
+  .pallino.rosso{background:#c62828;}
+  .voce .bpm{
+    font-size:12px;
+    color:var(--testo-sec);
+    margin-top:4px;
+  }
+  .elimina{
+    border:none;
+    background:transparent;
+    color:var(--testo-sec);
+    font-size:13px;
+    padding:6px 8px;
+  }
+  .vuoto{
+    text-align:center;
+    color:var(--testo-sec);
+    font-size:14px;
+    padding:30px 10px;
+  }
+  .legenda{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-size:12px;
+    color:var(--testo-sec);
+    margin-bottom:14px;
+    padding:0 2px;
+  }
+  .legenda .riga-legenda{display:flex;gap:16px;}
+  .legenda span{display:flex;align-items:center;gap:5px;}
+  button.esporta{
+    width:100%;
+    height:46px;
+    border-radius:10px;
+    border:1px solid var(--bordo);
+    background:var(--card);
+    color:var(--blu);
+    font-size:15px;
+    font-weight:600;
+    margin-top:20px;
+  }
+  button.esporta:active{opacity:0.85;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Monitoraggio Pressione</h1>
+  <p>Registra pressione, battiti, data e ora</p>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Nuova misurazione</h2>
+
+    <div class="riga">
+      <div class="campo">
+        <label for="data">Data (gg/mm/aaaa)</label>
+        <input type="date" id="data">
+        <div class="errore" id="err-data"></div>
+      </div>
+      <div class="campo">
+        <label for="ora">Ora (hh:mm)</label>
+        <input type="time" id="ora">
+        <div class="errore" id="err-ora"></div>
+      </div>
+    </div>
+
+    <div class="riga">
+      <div class="campo">
+        <label for="massima">Massima</label>
+        <input type="number" id="massima" inputmode="numeric" step="1" placeholder="es. 120">
+        <div class="errore" id="err-massima"></div>
+      </div>
+      <div class="campo">
+        <label for="minima">Minima</label>
+        <input type="number" id="minima" inputmode="numeric" step="1" placeholder="es. 80">
+        <div class="errore" id="err-minima"></div>
+      </div>
+      <div class="campo">
+        <label for="bpm">Battiti/min</label>
+        <input type="number" id="bpm" inputmode="numeric" step="1" placeholder="es. 70">
+        <div class="errore" id="err-bpm"></div>
+      </div>
+    </div>
+
+    <button class="salva" id="salva">Salva misurazione</button>
+  </div>
+
+  <div class="legenda">
+    <div class="riga-legenda">
+      <span><span class="pallino verde"></span>Massima sotto 140</span>
+      <span><span class="pallino rosso"></span>Massima 140 o superiore</span>
+    </div>
+    <div class="riga-legenda">
+      <span><span class="pallino verde"></span>Minima sotto 90</span>
+      <span><span class="pallino rosso"></span>Minima 90 o superiore</span>
+    </div>
+  </div>
+
+  <div class="lista-titolo">Storico</div>
+  <div id="lista"></div>
+
+  <button class="esporta" id="esporta">Esporta in Excel (.xlsx)</button>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const CHIAVE = 'pressione:storico';
+
+function oggi(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function adesso(){
+  const d = new Date();
+  return d.toTimeString().slice(0,5);
+}
+document.getElementById('data').value = oggi();
+document.getElementById('ora').value = adesso();
+
+function formattaData(iso){
+  const [a,m,g] = iso.split('-');
+  return `${g}/${m}/${a}`;
+}
+
+async function carica(){
+  try{
+    const grezzo = localStorage.getItem(CHIAVE);
+    return grezzo ? JSON.parse(grezzo) : [];
+  }catch(e){
+    console.error('Errore lettura', e);
+    return [];
+  }
+}
+async function salvaLista(lista){
+  try{
+    localStorage.setItem(CHIAVE, JSON.stringify(lista));
+  }catch(e){
+    console.error('Errore salvataggio', e);
+    alert('Non è stato possibile salvare i dati sul dispositivo.');
+  }
+}
+
+function pulisciErrori(){
+  ['data','ora','massima','minima','bpm'].forEach(id=>{
+    document.getElementById('err-'+id).textContent = '';
+  });
+}
+
+async function render(){
+  const lista = await carica();
+  const cont = document.getElementById('lista');
+  cont.innerHTML = '';
+  if(lista.length === 0){
+    cont.innerHTML = '<div class="vuoto">Nessuna misurazione registrata</div>';
+    return;
+  }
+  const ordinata = [...lista].sort((a,b)=> (b.dataIso+b.ora).localeCompare(a.dataIso+a.ora));
+  ordinata.forEach(v=>{
+    const div = document.createElement('div');
+    div.className = 'voce';
+    const massimaCritica = v.massima >= 140;
+    const minimaCritica = v.minima >= 90;
+    div.innerHTML = `
+      <div class="sinistra">
+        <div class="data">${formattaData(v.dataIso)} — ${v.ora}</div>
+        <div class="valori">
+          ${v.massima}<span class="pallino ${massimaCritica ? 'rosso' : 'verde'}"></span>
+          <span class="sep">/</span>
+          ${v.minima}<span class="pallino ${minimaCritica ? 'rosso' : 'verde'}"></span>
+        </div>
+        <div class="bpm">${v.bpm} bpm</div>
+      </div>
+      <button class="elimina" data-id="${v.id}">Elimina</button>
+    `;
+    cont.appendChild(div);
+  });
+  cont.querySelectorAll('.elimina').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      const id = e.target.getAttribute('data-id');
+      const lista = await carica();
+      const nuova = lista.filter(v=>v.id !== id);
+      await salvaLista(nuova);
+      render();
+    });
+  });
+}
+
+document.getElementById('salva').addEventListener('click', async ()=>{
+  pulisciErrori();
+  const dataIso = document.getElementById('data').value;
+  const ora = document.getElementById('ora').value;
+  const massima = document.getElementById('massima').value;
+  const minima = document.getElementById('minima').value;
+  const bpm = document.getElementById('bpm').value;
+
+  let valido = true;
+  if(!dataIso){ document.getElementById('err-data').textContent = 'Inserisci una data'; valido = false; }
+  if(!ora){ document.getElementById('err-ora').textContent = 'Inserisci un orario'; valido = false; }
+  if(!massima || !Number.isInteger(Number(massima))){ document.getElementById('err-massima').textContent = 'Numero intero'; valido = false; }
+  if(!minima || !Number.isInteger(Number(minima))){ document.getElementById('err-minima').textContent = 'Numero intero'; valido = false; }
+  if(!bpm || !Number.isInteger(Number(bpm))){ document.getElementById('err-bpm').textContent = 'Numero intero'; valido = false; }
+
+  if(!valido) return;
+
+  const lista = await carica();
+  lista.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+    dataIso,
+    ora,
+    massima: parseInt(massima,10),
+    minima: parseInt(minima,10),
+    bpm: parseInt(bpm,10)
+  });
+  await salvaLista(lista);
+
+  document.getElementById('massima').value = '';
+  document.getElementById('minima').value = '';
+  document.getElementById('bpm').value = '';
+  document.getElementById('data').value = oggi();
+  document.getElementById('ora').value = adesso();
+
+  render();
+});
+
+document.getElementById('esporta').addEventListener('click', async ()=>{
+  const lista = await carica();
+  if(lista.length === 0){
+    alert('Nessun dato da esportare.');
+    return;
+  }
+  const ordinata = [...lista].sort((a,b)=> (a.dataIso+a.ora).localeCompare(b.dataIso+b.ora));
+  const righe = ordinata.map(v => ({
+    'Data': formattaData(v.dataIso),
+    'Ora': v.ora,
+    'Massima': v.massima,
+    'Minima': v.minima,
+    'Battiti/min': v.bpm
+  }));
+  const foglio = XLSX.utils.json_to_sheet(righe);
+  foglio['!cols'] = [{wch:12},{wch:8},{wch:10},{wch:10},{wch:12}];
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, foglio, 'Pressione');
+  const oggiStr = oggi().split('-').reverse().join('-');
+  XLSX.writeFile(libro, `pressione_${oggiStr}.xlsx`);
+});
+
+render();
+</script>
+
+</body>
+</html>
